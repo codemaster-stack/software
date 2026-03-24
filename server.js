@@ -23,7 +23,7 @@ const app = express();
 // ── CORS ─────────────────────────────────────────────────
 // Allow requests from your frontend URL
 const allowedOrigins = [
-  "https://angeluni-two.vercel.app",
+  "www.angeluni-salltd.com",
   process.env.FRONTEND_URL,
   "http://localhost:3000",
   "http://localhost:5500",
