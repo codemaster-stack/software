@@ -23,11 +23,12 @@ const app = express();
 // ── CORS ─────────────────────────────────────────────────
 // Allow requests from your frontend URL
 const allowedOrigins = [
-  process.env.FRONTEND_URL || "http://localhost:3000",
-  "http://localhost:5500",   // VS Code Live Server
-  "http://127.0.0.1:5500",
+  "https://angeluni-two.vercel.app",
+  process.env.FRONTEND_URL,
   "http://localhost:3000",
-];
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+].filter(Boolean); // removes undefined/null values
 
 app.use(
   cors({
