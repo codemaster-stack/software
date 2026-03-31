@@ -44,17 +44,27 @@ const projectSchema = new mongoose.Schema(
       default: "#",
       trim: true,
     },
+    imageUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    imagePublicId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     isVisible: {
       type: Boolean,
-      default: true, // Admin can hide projects without deleting
+      default: true,
     },
     order: {
       type: Number,
-      default: 0, // For custom sort order
+      default: 0,
     },
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt automatically
+    timestamps: true,
   }
 );
 
