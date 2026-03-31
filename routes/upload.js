@@ -1,5 +1,6 @@
 // ============================================================
-//  routes/upload.js — Image Upload via Cloudinary
+//  routes/upload.js — Image Upload via Cloudinary v2
+//  Uses memory storage + direct stream upload (no multer-storage-cloudinary)
 //  Protected — JWT required
 // ============================================================
 
@@ -17,20 +18,26 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ── Multer — store in memory before uploading ─────────────
-const storage = multer.memoryStorage();
-const upload  = multer({
-  storage,
+// ── Multer memory storage ─────────────────────────────────
+const upload = multer({
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
   fileFilter: (req, file, cb) => {
     const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
-    if (allowed.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only image files are allowed (JPG, PNG, WebP, GIF)"));
-    }
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error("Only image files allowed (JPG, PNG, WebP, GIF)"));
   },
 });
+
+// ── Helper: upload buffer to Cloudinary ───────────────────
+const uploadToCloudinary = (buffer, options) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) reject(error);
+      else resolve(result);
+    }).end(buffer);
+  });
+};
 
 // ── POST /api/upload/image (PROTECTED) ───────────────────
 router.post("/image", protect, upload.single("image"), async (req, res) => {
@@ -39,18 +46,11 @@ router.post("/image", protect, upload.single("image"), async (req, res) => {
       return res.status(400).json({ success: false, message: "No image file provided." });
     }
 
-    // Upload buffer to Cloudinary
-    const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          folder:         "angeluni-salltd/projects",
-          transformation: [{ width: 800, height: 500, crop: "fill", quality: "auto" }],
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      ).end(req.file.buffer);
+    const result = await uploadToCloudinary(req.file.buffer, {
+      folder: "angeluni-salltd/projects",
+      transformation: [
+        { width: 800, height: 500, crop: "fill", quality: "auto", fetch_format: "auto" }
+      ],
     });
 
     res.json({
@@ -71,7 +71,6 @@ router.delete("/image", protect, async (req, res) => {
   try {
     const { publicId } = req.body;
     if (!publicId) return res.status(400).json({ success: false, message: "Public ID required." });
-
     await cloudinary.uploader.destroy(publicId);
     res.json({ success: true, message: "Image deleted." });
   } catch (error) {
