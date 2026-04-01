@@ -6,7 +6,14 @@
 
 const express      = require("express");
 const nodemailer   = require("nodemailer");
+const multer       = require("multer");
 const { protect }  = require("../middleware/auth");
+
+// Multer — store attachments in memory (max 10MB)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 const router = express.Router();
 
@@ -362,7 +369,7 @@ const buildEmailHTML = ({ recipientName, subject, message, senderName }) => {
 };
 
 // ── POST /api/email/send (PROTECTED) ─────────────────────
-router.post("/send", protect, async (req, res) => {
+router.post("/send", protect, upload.single("attachment"), async (req, res) => {
   try {
     const {
       recipientEmail,
@@ -396,6 +403,15 @@ router.post("/send", protect, async (req, res) => {
       html:     buildEmailHTML({ recipientName, subject, message, senderName }),
       text:     `Dear ${recipientName || "Valued Client"},\n\n${message}\n\nBest regards,\n${senderName || "The Angeluni-salltd Team"}\ncontact@angeluni-salltd.com`,
     };
+
+    // Add attachment if file was uploaded
+    if (req.file) {
+      mailOptions.attachments = [{
+        filename:    req.file.originalname,
+        content:     req.file.buffer,
+        contentType: req.file.mimetype,
+      }];
+    }
 
     const info = await transporter.sendMail(mailOptions);
 
