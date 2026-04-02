@@ -19,10 +19,15 @@ const upload = multer({
 // ── Gmail transporter ─────────────────────────────────────
 const createTransporter = () => {
   return nodemailer.createTransport({
-    service: "gmail",
+    host:   "smtp.gmail.com",
+    port:    465,
+    secure:  true, // SSL — works on Render free plan
     auth: {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_APP_PASSWORD,
+    },
+    tls: {
+      rejectUnauthorized: false,
     },
   });
 };

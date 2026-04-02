@@ -24,8 +24,6 @@ const app = express();
 
 // ── CORS ──────────────────────────────────────────────────
 const allowedOrigins = [
-  "https://angeluni-salltd.com",
-  "https://www.angeluni-salltd.com",
   "https://angeluni-two.vercel.app",
   process.env.FRONTEND_URL,
   "http://localhost:3000",
@@ -45,6 +43,10 @@ app.use(
     credentials: true,
   })
 );
+
+// ── Trust proxy — required for Render/cloud hosting ──────
+// Fixes X-Forwarded-For error with express-rate-limit
+app.set("trust proxy", 1);
 
 // ── Body parsers ──────────────────────────────────────────
 app.use(express.json({ limit: "10kb" }));
